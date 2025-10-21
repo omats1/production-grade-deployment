@@ -376,15 +376,15 @@ deploy_application() {
     ssh -i "$SSH_KEY" "$SSH_USER@$SSH_IP" "mkdir -p $remote_path"
     
     log_info "Transferring project files..."
-    rsync -avz --delete -e "ssh -i $SSH_KEY" \
-        --exclude '.git' \
-        --exclude 'node_modules' \
-        --exclude '__pycache__' \
-        --exclude '.env' \
-        "$TEMP_DIR/$PROJECT_NAME/" \
-        "$SSH_USER@$SSH_IP:$remote_path/" 2>&1 | tee -a "$LOG_FILE"
-    
-    log_success "Files transferred successfully"
+rsync -avz --delete -e "ssh -i \"$SSH_KEY\" -o StrictHostKeyChecking=no" \
+    --exclude '.git' \
+    --exclude 'node_modules' \
+    --exclude '__pycache__' \
+    --exclude '.env' \
+    "${TEMP_DIR}/${PROJECT_NAME}/" \
+    "${SSH_USER}@${SSH_IP}:${remote_path}/" | tee -a "$LOG_FILE"
+
+log_success "Files transferred successfully"
     
     log_info "Building and starting Docker container..."
     
