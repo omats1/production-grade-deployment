@@ -415,15 +415,18 @@ deploy_application() {
     
     log_info "Building and starting Docker container..."
     
-    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" bash << ENDSSH 2>&1 | tee -a "$LOG_FILE"
+    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" bash << 'ENDSSH' 2>&1 | tee -a "$LOG_FILE"
         set -e
         cd $remote_path
-        
-        # Stop and remove old containers
-        echo "[INFO] Stopping existing containers..."
-        docker stop ${PROJECT_NAME}_app 2>/dev/null || true
-        docker rm ${PROJECT_NAME}_app 2>/dev/null || true
-        
+
+        # Convert project name to lowercase for Docker compliance
+        LOWER_NAME=\$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+
+        echo "[INFO] Stopping and removing existing containers..."
+        docker stop \${LOWER_NAME}_app 2>/dev/null || true
+        docker rm \${LOWER_NAME}_app 2>/dev/null || true
+        docker rmi \${LOWER_NAME}:latest 2>/dev/null || true
+
         # Build new image
         if [ -f "docker-compose.yml" ] || [ -f "docker-compose.yaml" ]; then
             echo "[INFO] Using docker-compose..."
@@ -431,31 +434,32 @@ deploy_application() {
             docker-compose up -d --build
         else
             echo "[INFO] Using Dockerfile..."
-            docker build -t "$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]'):latest" .
+            docker build -t "\${LOWER_NAME}:latest" .
 
-        # Convert project name to lowercase for Docker compliance
-LOWER_NAME=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+            echo "[INFO] Running new container..."
+            docker run -d \
+                --name \${LOWER_NAME}_app \
+                -p \${APP_PORT}:\${APP_PORT} \
+                --restart unless-stopped \
+                \${LOWER_NAME}:latest
+        fi
 
-docker run -d \
-    --name ${LOWER_NAME}_app \
-    -p ${APP_PORT}:${APP_PORT} \
-    --restart unless-stopped \
-    ${LOWER_NAME}:latest
+        echo "[INFO] Waiting for container to start..."
+        sleep 5
 
-        
-        # Verify container is running
-        if docker ps | grep -q ${PROJECT_NAME}; then
-            echo "[SUCCESS] Container is running"
-            docker ps | grep ${PROJECT_NAME}
+        if docker ps | grep -q \${LOWER_NAME}_app; then
+            echo "[SUCCESS] Container is running:"
+            docker ps | grep \${LOWER_NAME}_app
         else
             echo "[ERROR] Container failed to start"
-            docker logs ${PROJECT_NAME}_app || docker-compose logs
+            docker logs \${LOWER_NAME}_app || docker-compose logs
             exit 1
         fi
 ENDSSH
-    
+
     log_success "Application deployed successfully"
 }
+
 
 ###############################################################################
 # STEP 7: CONFIGURE NGINX REVERSE PROXY
