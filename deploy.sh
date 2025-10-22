@@ -413,13 +413,15 @@ deploy_application() {
 
     log_info "Building and starting Docker container..."
 
-    # Note: No single quotes around ENDSSH so that variables expand properly
     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" bash << ENDSSH 2>&1 | tee -a "$LOG_FILE"
 set -e
 cd $remote_path
 
 # Convert project name to lowercase for Docker compliance
 LOWER_NAME=\$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+
+# Default to port 80 if APP_PORT not defined
+APP_PORT=\${APP_PORT:-80}
 
 echo "[INFO] Stopping and removing existing containers..."
 docker stop \${LOWER_NAME}_app 2>/dev/null || true
@@ -458,6 +460,7 @@ ENDSSH
 
     log_success "Application deployed successfully"
 }
+
 
 
 ###############################################################################
