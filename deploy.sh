@@ -373,22 +373,49 @@ deploy_application() {
     local remote_path="/home/$SSH_USER/deployments/$PROJECT_NAME"
     
     log_info "Creating deployment directory on remote server..."
-    ssh -i "$SSH_KEY" "$SSH_USER@$SSH_IP" "mkdir -p $remote_path"
+    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" "mkdir -p $remote_path"
     
     log_info "Transferring project files..."
-rsync -avz --delete -e "ssh -i \"$SSH_KEY\" -o StrictHostKeyChecking=no" \
-    --exclude '.git' \
-    --exclude 'node_modules' \
-    --exclude '__pycache__' \
-    --exclude '.env' \
-    "${TEMP_DIR}/${PROJECT_NAME}/" \
-    "${SSH_USER}@${SSH_IP}:${remote_path}/" | tee -a "$LOG_FILE"
-
-log_success "Files transferred successfully"
+    
+    # Try rsync, fallback to tar+scp if rsync fails (Windows compatibility)
+    if rsync -avz --delete -e "ssh -i $SSH_KEY -o StrictHostKeyChecking=no" \
+        --exclude '.git' \
+        --exclude 'node_modules' \
+        --exclude '__pycache__' \
+        --exclude '.env' \
+        "${TEMP_DIR}/${PROJECT_NAME}/" \
+        "${SSH_USER}@${SSH_IP}:${remote_path}/" 2>&1 | tee -a "$LOG_FILE"; then
+        log_success "Files transferred successfully via rsync"
+    else
+        log_warning "rsync failed, falling back to tar+scp method..."
+        
+        # Create temporary archive
+        local temp_archive="/tmp/deploy_${PROJECT_NAME}_$(date +%s).tar.gz"
+        
+        cd "${TEMP_DIR}"
+        tar czf "$temp_archive" \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='__pycache__' \
+            --exclude='.env' \
+            "${PROJECT_NAME}/" 2>&1 | tee -a "$LOG_FILE"
+        
+        log_info "Transferring via scp..."
+        scp -i "$SSH_KEY" -o StrictHostKeyChecking=no "$temp_archive" "${SSH_USER}@${SSH_IP}:/tmp/" 2>&1 | tee -a "$LOG_FILE"
+        
+        log_info "Extracting on remote server..."
+        ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" \
+            "mkdir -p ${remote_path} && cd ${remote_path} && tar xzf /tmp/$(basename $temp_archive) --strip-components=1 && rm /tmp/$(basename $temp_archive)" 2>&1 | tee -a "$LOG_FILE"
+        
+        # Cleanup local temp file
+        rm -f "$temp_archive"
+        
+        log_success "Files transferred successfully via tar+scp"
+    fi
     
     log_info "Building and starting Docker container..."
     
-    ssh -i "$SSH_KEY" "$SSH_USER@$SSH_IP" bash << ENDSSH 2>&1 | tee -a "$LOG_FILE"
+    ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" bash << ENDSSH 2>&1 | tee -a "$LOG_FILE"
         set -e
         cd $remote_path
         
