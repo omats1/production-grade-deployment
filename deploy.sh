@@ -431,7 +431,8 @@ deploy_application() {
             docker-compose up -d --build
         else
             echo "[INFO] Using Dockerfile..."
-            docker build -t ${PROJECT_NAME}:latest .
+            docker build -t "$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]'):latest" .
+
             docker run -d \
                 --name ${PROJECT_NAME}_app \
                 -p ${APP_PORT}:${APP_PORT} \
