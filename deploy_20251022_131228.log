@@ -1,0 +1,154 @@
+[0;34m[INFO][0m Starting deployment process...
+[0;34m[INFO][0m Log file: /c/Users/HP/Documents/production-grade-deployment/deploy_20251022_131228.log
+============================================================
+  STEP 1: Collecting Deployment Parameters
+============================================================
+[0;31m[ERROR][0m Invalid URL format. Must start with http:// or https://
+[0;32m[SUCCESS][0m Valid repository URL provided
+[0;32m[SUCCESS][0m PAT received (hidden from logs)
+[0;34m[INFO][0m Using branch: main
+[0;32m[SUCCESS][0m SSH username: ubuntu
+[0;32m[SUCCESS][0m Valid IP address: 52.203.61.52
+[1;33m[WARNING][0m SSH key permissions are 444, setting to 600
+[0;32m[SUCCESS][0m SSH key validated: C:/Users/HP/Downloads/pem.pem
+[0;32m[SUCCESS][0m Application port: 8080
+[0;34m[INFO][0m Project name: production-grade-deployment
+[0;34m[INFO][0m Configuration Summary:
+[0;34m[INFO][0m   Repository: https://github.com/Ilashe/production-grade-deployment.git
+[0;34m[INFO][0m   Branch: main
+[0;34m[INFO][0m   Server: ubuntu@52.203.61.52
+[0;34m[INFO][0m   Port: 8080
+============================================================
+  STEP 2: Cloning/Updating Repository
+============================================================
+[0;34m[INFO][0m Repository already exists, pulling latest changes...
+From https://github.com/Ilashe/Production-Grade-Deployment
+ * branch            main       -> FETCH_HEAD
+Your branch is up to date with 'origin/main'.
+Already on 'main'
+From https://github.com/Ilashe/Production-Grade-Deployment
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+[0;32m[SUCCESS][0m Repository updated successfully
+[0;34m[INFO][0m Current commit: a625a83
+============================================================
+  STEP 3: Verifying Docker Configuration
+============================================================
+[0;32m[SUCCESS][0m Dockerfile found
+[0;34m[INFO][0m Project structure verified
+============================================================
+  STEP 4: Testing SSH Connectivity
+============================================================
+[0;34m[INFO][0m Testing SSH connection to ubuntu@52.203.61.52...
+[0;32m[SUCCESS][0m SSH connection successful
+[0;34m[INFO][0m Verifying sudo access...
+[0;32m[SUCCESS][0m Passwordless sudo confirmed
+============================================================
+  STEP 5: Preparing Remote Environment
+============================================================
+[0;34m[INFO][0m Installing required packages on remote server...
+[INFO] Updating package lists...
+[INFO] Installing prerequisites...
+[INFO] Docker already installed
+[INFO] Docker Compose already installed
+[INFO] Enabling services...
+Synchronizing state of docker.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable docker
+Synchronizing state of nginx.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable nginx
+
+[INFO] Installed versions:
+Docker version 28.5.1, build e180ab8
+Docker Compose version v2.40.1
+nginx version: nginx/1.24.0 (Ubuntu)
+[0;32m[SUCCESS][0m Remote environment prepared
+============================================================
+  STEP 6: Deploying Dockerized Application
+============================================================
+[0;34m[INFO][0m Creating deployment directory on remote server...
+[0;34m[INFO][0m Transferring project files...
+The source and destination cannot both be remote.
+rsync error: syntax or usage error (code 1) at main.c(1415) [Receiver=3.4.1]
+[1;33m[WARNING][0m rsync failed, falling back to tar+scp method...
+[0;34m[INFO][0m Transferring via scp...
+[0;34m[INFO][0m Extracting on remote server...
+[0;32m[SUCCESS][0m Files transferred successfully via tar+scp
+[0;34m[INFO][0m Building and starting Docker container...
+"[WARNING] Port 80 is busy. Switching to port 8080..."
+[INFO] Stopping and removing existing containers...
+production-grade-deployment_app
+production-grade-deployment_app
+Untagged: production-grade-deployment:latest
+Deleted: sha256:075adb9847574b304d1692054559c2489dc0eb8cd0c3eae6a4b4462938efdd5e
+[INFO] Using Dockerfile...
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 107B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/nginx:alpine
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+[INFO] Running new container...
+575853c5a07dd2dbdfa084b32c4c99c1010bc74889479c0f41b147799724f6ea
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/library/nginx:alpine@sha256:61e01287e546aac28a3f56839c136b31f590273f3b41187a36f46f6a03bbfe22
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 32B done
+#5 DONE 0.0s
+
+#6 [2/2] COPY index.html /usr/share/nginx/html/
+#6 CACHED
+
+#7 exporting to image
+#7 exporting layers done
+#7 writing image sha256:075adb9847574b304d1692054559c2489dc0eb8cd0c3eae6a4b4462938efdd5e done
+#7 naming to docker.io/library/production-grade-deployment:latest done
+#7 DONE 0.0s
+[INFO] Waiting for container to start...
+[SUCCESS] Container is running:
+575853c5a07d   production-grade-deployment:latest   "/docker-entrypoint.…"   5 seconds ago   Up 5 seconds   80/tcp, 0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp   production-grade-deployment_app
+[0;32m[SUCCESS][0m Application deployed successfully
+============================================================
+  STEP 7: Configuring Nginx Reverse Proxy
+============================================================
+[0;34m[INFO][0m Creating Nginx configuration...
+[INFO] Testing Nginx configuration...
+[INFO] Reloading Nginx...
+2025/10/22 12:16:19 [warn] 15945#15945: conflicting server name "_" on 0.0.0.0:80, ignored
+nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+nginx: configuration file /etc/nginx/nginx.conf test is successful
+[SUCCESS] Nginx configured and reloaded
+[0;32m[SUCCESS][0m Nginx reverse proxy configured
+============================================================
+  STEP 8: Validating Deployment
+============================================================
+[0;34m[INFO][0m Running deployment validation checks...
+[0;34m[INFO][0m Checking Docker service...
+[0;32m[SUCCESS][0m Docker service is active
+[0;32m[SUCCESS][0m Container is running
+[0;34m[INFO][0m Checking Nginx service...
+[0;32m[SUCCESS][0m Nginx service is active
+[0;34m[INFO][0m Testing application endpoint...
+[1;33m[WARNING][0m Application may not be responding yet on port 8080
+[0;34m[INFO][0m Testing Nginx reverse proxy...
+[1;33m[WARNING][0m Nginx proxy test inconclusive
+[0;32m[SUCCESS][0m Validation complete
+============================================================
+  DEPLOYMENT SUCCESSFUL!
+============================================================
+[0;32m[SUCCESS][0m Application deployed successfully!
+[0;34m[INFO][0m Access your application at: http://52.203.61.52
+[0;34m[INFO][0m Container port: 8080
+[0;34m[INFO][0m Project: production-grade-deployment
+[0;34m[INFO][0m Useful commands:
+[0;34m[INFO][0m   View logs: ssh -i C:/Users/HP/Downloads/pem.pem ubuntu@52.203.61.52 'docker logs production-grade-deployment_app'
+[0;34m[INFO][0m   Restart: ssh -i C:/Users/HP/Downloads/pem.pem ubuntu@52.203.61.52 'docker restart production-grade-deployment_app'
+[0;34m[INFO][0m   Cleanup: ./deploy.sh --cleanup
+[0;34m[INFO][0m Deployment log saved to: /c/Users/HP/Documents/production-grade-deployment/deploy_20251022_131228.log
