@@ -1,5 +1,7 @@
 **FOR the important details
 
+clone this repo first and run this command: ./deploy.sh
+
 
 **GIT REPOSITORY URL : https://github.com/Ilashe/production-grade-deployment.git
 
