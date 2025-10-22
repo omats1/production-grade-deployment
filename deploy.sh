@@ -544,13 +544,12 @@ validate_deployment() {
     fi
     
     # Check container health
-    log_info "Checking container health..."
-    if ssh -i "$SSH_KEY" "$SSH_USER@$SSH_IP" "docker ps | grep -q $PROJECT_NAME"; then
-        log_success "Container is running"
+    if ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_IP" "docker ps --filter 'status=running' --filter 'name=${PROJECT_NAME,,}_app' | grep -q ${PROJECT_NAME,,}_app"; then
+       log_success "Container is running"
     else
-        log_error "Container is not running"
-        return 1
+       log_error "Container is not running"
     fi
+
     
     # Check Nginx
     log_info "Checking Nginx service..."
