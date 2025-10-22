@@ -433,15 +433,15 @@ deploy_application() {
             echo "[INFO] Using Dockerfile..."
             docker build -t "$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]'):latest" .
 
-            docker run -d \
-                --name ${PROJECT_NAME}_app \
-                -p ${APP_PORT}:${APP_PORT} \
-                --restart unless-stopped \
-                ${PROJECT_NAME}:latest
-        fi
-        
-        echo "[INFO] Waiting for container to be healthy..."
-        sleep 5
+        # Convert project name to lowercase for Docker compliance
+LOWER_NAME=$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
+
+docker run -d \
+    --name ${LOWER_NAME}_app \
+    -p ${APP_PORT}:${APP_PORT} \
+    --restart unless-stopped \
+    ${LOWER_NAME}:latest
+
         
         # Verify container is running
         if docker ps | grep -q ${PROJECT_NAME}; then
