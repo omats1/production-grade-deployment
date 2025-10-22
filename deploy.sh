@@ -423,6 +423,12 @@ LOWER_NAME=\$(echo "$PROJECT_NAME" | tr '[:upper:]' '[:lower:]')
 # Default to port 80 if APP_PORT not defined
 APP_PORT=\${APP_PORT:-80}
 
+# Auto-detect port conflict and switch to 8080 if port 80 is busy
+if sudo lsof -i :80 >/dev/null 2>&1; then
+    echo \"[WARNING] Port 80 is busy. Switching to port 8080...\"
+    APP_PORT=8080
+fi
+
 echo "[INFO] Stopping and removing existing containers..."
 docker stop \${LOWER_NAME}_app 2>/dev/null || true
 docker rm \${LOWER_NAME}_app 2>/dev/null || true
